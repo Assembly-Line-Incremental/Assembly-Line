@@ -1,0 +1,72 @@
+name: Deploy Assembly Line
+env:
+    VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+    VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+on: [push, pull_request]
+
+jobs:
+    deploy:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Code
+              uses: actions/checkout@v4
+
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v2
+              with:
+                  bun-version: latest
+
+            - name: Install Dependencies
+              run: bun install
+
+            - name: Cache Next.js Build
+              uses: actions/cache@v4
+              with:
+                  path: ${{ github.workspace }}/.next/cache
+                  key: nextjs-${{ runner.os }}-${{ hashFiles('bun.lock') }}-${{ hashFiles('src/**/*') }}
+                  restore-keys: |
+                      nextjs-${{ runner.os }}-${{ hashFiles('bun.lock') }}-
+                      nextjs-${{ runner.os }}-
+
+            - name: Lint
+              run: bun run lint
+
+            - name: Type Check
+              run: bun run typecheck
+
+            - name: Build
+              run: bun run build
+
+            - name: Check formatting
+              run: bun run format:check
+
+            - name: Run Tests with Coverage (100% required)
+              run: bun run test:cov --run
+
+            - name: Upload Coverage Report
+              if: always()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: coverage-report
+                  path: coverage/
+                  retention-days: 30
+
+            - name: Deploy to Staging
+              id: deploy-vercel-staging
+              uses: amondnet/vercel-action@v25
+              with:
+                  vercel-token: ${{ secrets.VERCEL_TOKEN }}
+                  vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+                  vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+                  scope: ${{ secrets.VERCEL_ORG_ID }}
+
+            - name: Deploy to Production
+              uses: amondnet/vercel-action@v25
+              id: deploy-vercel-production
+              if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+              with:
+                  vercel-token: ${{ secrets.VERCEL_TOKEN }}
+                  vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+                  vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+                  vercel-args: "--prod"
+                  scope: ${{ secrets.VERCEL_ORG_ID }}
