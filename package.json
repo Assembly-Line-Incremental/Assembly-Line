@@ -16,6 +16,7 @@
 		"prepare": "husky"
 	},
 	"dependencies": {
+		"@sentry/nextjs": "10",
 		"@t3-oss/env-nextjs": "^0.13.10",
 		"add": "^2.0.6",
 		"class-variance-authority": "^0.7.1",
@@ -62,6 +63,8 @@
 		"unrs-resolver"
 	],
 	"trustedDependencies": [
+		"@sentry/cli",
+		"esbuild",
 		"msw",
 		"sharp",
 		"unrs-resolver"
