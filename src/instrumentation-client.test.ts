@@ -12,6 +12,9 @@ vi.mock("@sentry/nextjs", () => ({
 	captureRouterTransitionStart: mockCaptureRouterTransitionStart,
 }));
 
+vi.stubEnv("SKIP_ENV_VALIDATION", "1");
+vi.stubEnv("NEXT_PUBLIC_SENTRY_DSN", "https://fake-dsn@o0.ingest.sentry.io/0");
+
 const { onRouterTransitionStart } = await import("./instrumentation-client");
 
 describe("instrumentation-client", () => {
@@ -23,7 +26,7 @@ describe("instrumentation-client", () => {
 		it("is called with the correct DSN", () => {
 			expect(mockInit).toHaveBeenCalledWith(
 				expect.objectContaining({
-					dsn: "https://4dd0e49f7ad429d0ca37214918613d90@o4510903520657408.ingest.de.sentry.io/4510903529701456",
+					dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 				})
 			);
 		});

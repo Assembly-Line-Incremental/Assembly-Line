@@ -4,8 +4,10 @@
 
 import * as Sentry from "@sentry/nextjs";
 
+import { env } from "./env";
+
 Sentry.init({
-	dsn: "https://4dd0e49f7ad429d0ca37214918613d90@o4510903520657408.ingest.de.sentry.io/4510903529701456",
+	dsn: env.NEXT_PUBLIC_SENTRY_DSN,
 
 	// Add optional integrations for additional features
 	integrations: [Sentry.replayIntegration()],
