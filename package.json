@@ -73,9 +73,11 @@
 		"unrs-resolver"
 	],
 	"trustedDependencies": [
+		"@prisma/engines",
 		"@sentry/cli",
 		"esbuild",
 		"msw",
+		"prisma",
 		"sharp",
 		"unrs-resolver"
 	],
