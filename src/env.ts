@@ -15,7 +15,9 @@ export const env = createEnv({
 
 	experimental__runtimeEnv: {
 		NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
-		NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL,
+		NEXT_PUBLIC_URL: process.env.VERCEL_URL
+			? `https://${process.env.VERCEL_URL}`
+			: process.env.NEXT_PUBLIC_URL,
 	},
 
 	skipValidation: !!process.env.SKIP_ENV_VALIDATION,

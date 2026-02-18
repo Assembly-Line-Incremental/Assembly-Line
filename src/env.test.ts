@@ -97,4 +97,10 @@ describe("env", () => {
 		const { env } = await import("./env");
 		expect(env.NODE_ENV).toBe("invalid_value");
 	});
+
+	it("should use VERCEL_URL with https prefix when VERCEL_URL is set", async () => {
+		vi.stubEnv("VERCEL_URL", "my-app.vercel.app");
+		const { env } = await import("./env");
+		expect(env.NEXT_PUBLIC_URL).toBe("https://my-app.vercel.app");
+	});
 });
