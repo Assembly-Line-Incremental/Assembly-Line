@@ -33,11 +33,11 @@ describe("env", () => {
 		expect(env.NODE_ENV).toBe("development");
 	});
 
-	it("should fallback to undefined for NEXT_PUBLIC_URL when not set and validation is skipped", async () => {
+	it("should fallback to localhost URL for NEXT_PUBLIC_URL when not set and validation is skipped", async () => {
 		vi.stubEnv("NEXT_PUBLIC_URL", "");
 		delete (process.env as Record<string, string | undefined>).NEXT_PUBLIC_URL;
 		const { env } = await import("./env");
-		expect(env.NEXT_PUBLIC_URL).toBeUndefined();
+		expect(env.NEXT_PUBLIC_URL).toBe("http://localhost:3000");
 	});
 
 	it("should use NEXT_PUBLIC_URL from environment", async () => {
