@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { HeroSection } from "@/components/landing/hero-section";
-import { ScrollReveal } from "@/components/landing/scroll-reveal";
-import { AnimatedCounter } from "@/components/landing/animated-counter";
-import { FeatureCard } from "@/components/landing/feature-card";
-import { Navbar } from "@/components/landing/navbar";
-import { ConveyorBelt } from "@/components/landing/conveyor-belt";
-import { FEATURES, ERAS, PIPELINE_STEPS, STATS } from "@/components/landing/constants";
+import { HeroSection } from "@/features/landing/components/hero-section";
+import { ScrollReveal } from "@/features/landing/components/scroll-reveal";
+import { AnimatedCounter } from "@/features/landing/components/animated-counter";
+import { FeatureCard } from "@/features/landing/components/feature-card";
+import { Navbar } from "@/features/landing/components/navbar";
+import { ConveyorBelt } from "@/features/landing/components/conveyor-belt";
+import { FEATURES, ERAS, PIPELINE_STEPS, STATS } from "@/features/landing/components/constants";
 
 export default function Home() {
 	return (
@@ -507,7 +507,7 @@ export default function Home() {
 							<Button
 								asChild
 								size="lg"
-								className="h-14 rounded-2xl bg-linear-to-r from-[#00D4FF] to-[#0088BB] px-12 text-base font-bold text-[#0A1A2F] shadow-[0_0_40px_rgba(0,212,255,0.2)] transition-all duration-300 hover:shadow-[0_0_60px_rgba(0,212,255,0.4)] hover:brightness-110"
+								className="h-14 rounded-2xl bg-linear-to-r from-[#00D4FF] to-[#0088BB] px-12 text-base font-bold text-[#0A1A2F] shadow-[0_0_30px_rgba(0,212,255,0.2)] transition-all duration-300 hover:opacity-90 hover:shadow-[0_0_40px_rgba(0,212,255,0.3)]"
 							>
 								<Link href="/play">
 									Start Building
@@ -518,7 +518,7 @@ export default function Home() {
 
 						<p className="mt-6 flex items-center justify-center gap-1.5 text-xs text-[#8BA3B9]/40">
 							<Lock size={10} />
-							Free to play. No account required to start.
+							Free to play. Create an account to save your progress.
 						</p>
 					</ScrollReveal>
 				</div>

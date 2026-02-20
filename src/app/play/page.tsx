@@ -1,3 +1,4 @@
+import { requireAuth } from "@/lib/auth/auth-utils";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -28,6 +29,10 @@ export const metadata: Metadata = {
 	robots: { index: false, follow: false },
 };
 
-export default function Play() {
+const Play = async () => {
+	await requireAuth();
+
 	return <div>Play</div>;
-}
+};
+
+export default Play;

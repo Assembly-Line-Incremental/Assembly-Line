@@ -8,11 +8,11 @@ datasource db {
 }
 
 /// Row Level Security enabled — policy: id = auth.uid()
+
 model User {
   id            String   @id @default(cuid())
-  userId        String   @unique @map("user_id")
-  username      String   @unique
-  displayName   String   @map("display_name")
+  username      String?  @unique
+  displayName   String?  @map("display_name")
   email         String   @unique
   emailVerified Boolean  @default(false) @map("email_verified")
   avatarUrl     String?  @map("avatar_url")
@@ -26,7 +26,8 @@ model User {
   accounts Account[]
   saves    Save[]
 
-  @@index([userId])
+  name String
+
   @@map("profiles")
 }
 
@@ -80,6 +81,7 @@ model Verification {
 
 /// Row Level Security enabled — policy: user_id = auth.uid()
 /// game_state JSON shape: { machines, resources, milestones, techs, patents, era, prestige_count }
+
 model Save {
   id               String   @id @default(cuid())
   userId           String   @map("user_id")
