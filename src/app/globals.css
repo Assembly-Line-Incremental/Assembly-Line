@@ -45,6 +45,16 @@
 	--radius-2xl: calc(var(--radius) + 8px);
 	--radius-3xl: calc(var(--radius) + 12px);
 	--radius-4xl: calc(var(--radius) + 16px);
+
+	/* Assembly Line game palette */
+	--color-game-bg: var(--game-bg);
+	--color-game-bg-deep: var(--game-bg-deep);
+	--color-game-cyan: var(--game-cyan);
+	--color-game-cyan-muted: var(--game-cyan-muted);
+	--color-game-fire-red: var(--game-fire-red);
+	--color-game-fire-orange: var(--game-fire-orange);
+	--color-game-fire-yellow: var(--game-fire-yellow);
+	--color-game-text-muted: var(--game-text-muted);
 }
 
 :root {
@@ -114,6 +124,16 @@
 	--sidebar-accent-foreground: oklch(0.985 0 0);
 	--sidebar-border: oklch(1 0 0 / 10%);
 	--sidebar-ring: oklch(0.556 0 0);
+
+	/* Assembly Line game palette */
+	--game-bg: #0a1a2f;
+	--game-bg-deep: #06101e;
+	--game-cyan: #00d4ff;
+	--game-cyan-muted: #0088bb;
+	--game-fire-red: #ff4422;
+	--game-fire-orange: #ff7733;
+	--game-fire-yellow: #ffbb44;
+	--game-text-muted: #8ba3b9;
 }
 
 @layer base {
@@ -256,4 +276,16 @@ body::-webkit-scrollbar-thumb {
 }
 body::-webkit-scrollbar-thumb:hover {
 	background: rgba(0, 212, 255, 0.4);
+}
+
+/* Nuke all browser autofill styles */
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+	-webkit-box-shadow: 0 0 0 1000px var(--game-bg-deep) inset !important;
+	-webkit-text-fill-color: `#ffffff` !important;
+	caret-color: `#ffffff` !important;
+	border-color: rgba(255, 255, 255, 0.1) !important;
+	transition: background-color 5000s ease-in-out 0s !important;
 }

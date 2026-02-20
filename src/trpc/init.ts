@@ -1,4 +1,6 @@
+import { auth } from "@/lib/auth";
 import { initTRPC, TRPCError } from "@trpc/server";
+import { headers } from "next/headers";
 import { cache } from "react";
 import superjson from "superjson";
 
@@ -7,8 +9,10 @@ interface Context {
 }
 
 export const createTRPCContext = cache(async (): Promise<Context> => {
-	// TODO: populate userId from authenticated session once auth is implemented
-	return { userId: null };
+	const session = await auth.api.getSession({
+		headers: await headers(),
+	});
+	return { userId: session?.user?.id ?? null };
 });
 
 const t = initTRPC.context<Context>().create({
@@ -19,18 +23,18 @@ export const createTRPCRouter = t.router;
 export const createCallerFactory = t.createCallerFactory;
 export const baseProcedure = t.procedure;
 export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
-	// TODO: get session from auth api
-	const session = null;
+	const session = await auth.api.getSession({
+		headers: await headers(),
+	});
 
-	/* istanbul ignore next -- @preserve TODO: unreachable until auth is implemented */
-	if (session) {
-		return next({
-			ctx: { ...ctx, auth: session },
+	if (!session) {
+		throw new TRPCError({
+			code: "UNAUTHORIZED",
+			message: "You must be logged in to access this resource.",
 		});
 	}
 
-	throw new TRPCError({
-		code: "UNAUTHORIZED",
-		message: "You must be logged in to access this resource.",
+	return next({
+		ctx: { ...ctx, auth: session },
 	});
 });

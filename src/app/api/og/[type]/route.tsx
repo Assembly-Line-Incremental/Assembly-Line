@@ -15,7 +15,7 @@ const CONTENT = {
 		tagline: "Build machines. Chain resources. Optimize endlessly.",
 	},
 	game: {
-		eyebrow: "Free to Play · No Account Required",
+		eyebrow: "Free to Play · Build Your Factory",
 		line1: "YOUR FACTORY",
 		line2: "AWAITS",
 		tagline: "Build machines. Chain resources. Optimize endlessly.",

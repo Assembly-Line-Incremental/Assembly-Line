@@ -9,6 +9,8 @@ import { env } from "./src/env";
 Sentry.init({
 	dsn: env.NEXT_PUBLIC_SENTRY_DSN,
 
+	integrations: [Sentry.consoleLoggingIntegration({ levels: ["log", "warn", "error"] })],
+
 	// Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
 	tracesSampleRate: 1,
 
