@@ -7,39 +7,39 @@ datasource db {
   provider = "postgresql"
 }
 
-/// Row Level Security enabled — policy: id = auth.uid()
+// ============================================================================
+// AUTHENTIFICATION (BetterAuth)
+// ============================================================================
 
 model User {
-  id            String   @id @default(cuid())
-  username      String?  @unique
-  displayName   String?  @map("display_name")
-  email         String   @unique
-  emailVerified Boolean  @default(false) @map("email_verified")
-  avatarUrl     String?  @map("avatar_url")
+  id            String  @id @default(cuid())
+  name          String
+  email         String  @unique
+  emailVerified Boolean
   image         String?
-  settings      Json?    @db.JsonB
-  supporterTier Int      @default(0) @map("supporter_tier")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
 
-  sessions Session[]
-  accounts Account[]
-  saves    Save[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  name String
+  sessions           Session[]
+  accounts           Account[]
+  gameSaves          GameSave[]
+  achievements       Achievement[]
+  supporter          Supporter?
+  leaderboardEntries LeaderboardEntry[]
 
-  @@map("profiles")
+  @@map("user")
 }
 
 model Session {
   id        String   @id
-  expiresAt DateTime @map("expires_at")
+  expiresAt DateTime
   token     String
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  ipAddress String?  @map("ip_address")
-  userAgent String?  @map("user_agent")
-  userId    String   @map("user_id")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([token])
@@ -49,19 +49,19 @@ model Session {
 
 model Account {
   id                    String    @id
-  accountId             String    @map("account_id")
-  providerId            String    @map("provider_id")
-  userId                String    @map("user_id")
+  accountId             String
+  providerId            String
+  userId                String
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?   @map("access_token")
-  refreshToken          String?   @map("refresh_token")
-  idToken               String?   @map("id_token")
-  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
-  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
   scope                 String?
   password              String?
-  createdAt             DateTime  @default(now()) @map("created_at")
-  updatedAt             DateTime  @updatedAt @map("updated_at")
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@index([userId])
   @@map("account")
@@ -71,31 +71,353 @@ model Verification {
   id         String   @id
   identifier String
   value      String
-  expiresAt  DateTime @map("expires_at")
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([identifier])
   @@map("verification")
 }
 
-/// Row Level Security enabled — policy: user_id = auth.uid()
-/// game_state JSON shape: { machines, resources, milestones, techs, patents, era, prestige_count }
+// ============================================================================
+// CORE GAME STATE
+// ============================================================================
 
-model Save {
-  id               String   @id @default(cuid())
-  userId           String   @map("user_id")
-  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  slotNumber       Int      @map("slot_number") /// @check(1..5)
+model GameSave {
+  id            String   @id @default(cuid())
+  userId        String
+  slot          Int
+  name          String   @default("Save")
+  currentEra    Int      @default(1)
+  prestigeCount Int      @default(0)
+  totalPlaytime BigInt   @default(0)
+  isHardcore    Boolean  @default(false)
+  lastTickAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user               User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resources          Resource[]
+  playerMachines     PlayerMachine[]
+  heatState          HeatState?
+  playerSynergies    PlayerSynergy[]
+  prestigeState      PrestigeState?
+  playerTeches       PlayerTech[]
+  playerMilestones   PlayerMilestone[]
+  playerEvents       PlayerEvent[]
+  leaderboardEntries LeaderboardEntry[]
+
+  @@unique([userId, slot])
+  @@map("game_save")
+}
+
+// ============================================================================
+// RESSOURCES
+// ============================================================================
+
+enum ResourceType {
+  METAL
+  CIRCUIT
+  ENERGY
+  HEAT
+  GEAR
+  CHIP
+  PLASMA
+  NANOFIBER
+  QUANTUM_CORE
+  DARK_MATTER
+}
+
+model Resource {
+  id            String       @id @default(cuid())
+  saveId        String
+  type          ResourceType
+  amount        Decimal      @default(0) @db.Decimal(30, 6)
+  totalProduced Decimal      @default(0) @db.Decimal(30, 6)
+  totalSpent    Decimal      @default(0) @db.Decimal(30, 6)
+
+  save GameSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
+
+  @@unique([saveId, type])
+  @@map("resource")
+}
+
+// ============================================================================
+// MACHINES & PRODUCTION
+// ============================================================================
+
+model MachineDefinition {
+  id              String          @id @default(cuid())
+  slug            String          @unique
+  name            String
+  era             Int
+  baseCost        Json
+  costMultiplier  Decimal         @db.Decimal(10, 4)
+  baseProduction  Json
+  baseConsumption Json
+  baseHeat        Decimal         @default(0) @db.Decimal(10, 4)
+  unlockCondition Json?
+  maxLevel        Int?
+  playerMachines  PlayerMachine[]
+
+  @@index([era])
+  @@map("machine_definition")
+}
+
+model PlayerMachine {
+  id           String  @id @default(cuid())
+  saveId       String
+  machineId    String
+  count        Int     @default(0)
+  level        Int     @default(1)
+  isActive     Boolean @default(true)
+  assignedSlot Int?
+
+  save    GameSave          @relation(fields: [saveId], references: [id], onDelete: Cascade)
+  machine MachineDefinition @relation(fields: [machineId], references: [id], onDelete: Restrict)
+
+  @@unique([saveId, machineId])
+  @@map("player_machine")
+}
+
+// ============================================================================
+// CHALEUR
+// ============================================================================
+
+model HeatState {
+  id               String    @id @default(cuid())
+  saveId           String    @unique
+  currentHeat      Decimal   @default(0) @db.Decimal(10, 4)
+  maxHeat          Decimal   @default(100) @db.Decimal(10, 4)
+  dissipationRate  Decimal   @default(1) @db.Decimal(10, 4)
+  overheatingSince DateTime?
+
+  save GameSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
+
+  @@map("heat_state")
+}
+
+// ============================================================================
+// SYNERGIES
+// ============================================================================
+
+model SynergyDefinition {
+  id              String          @id @default(cuid())
+  slug            String          @unique
+  name            String
+  description     String
+  era             Int
+  conditions      Json
+  effects         Json
+  playerSynergies PlayerSynergy[]
+
+  @@index([era])
+  @@map("synergy_definition")
+}
+
+model PlayerSynergy {
+  id         String   @id @default(cuid())
+  saveId     String
+  synergyId  String
+  isActive   Boolean  @default(false)
+  unlockedAt DateTime @default(now())
+
+  save    GameSave          @relation(fields: [saveId], references: [id], onDelete: Cascade)
+  synergy SynergyDefinition @relation(fields: [synergyId], references: [id], onDelete: Restrict)
+
+  @@unique([saveId, synergyId])
+  @@map("player_synergy")
+}
+
+// ============================================================================
+// PRESTIGE
+// ============================================================================
+
+model PrestigeState {
+  id             String    @id @default(cuid())
+  saveId         String    @unique
+  prestigePoints Decimal   @default(0) @db.Decimal(30, 6)
+  totalEarned    Decimal   @default(0) @db.Decimal(30, 6)
+  timesPrestiged Int       @default(0)
+  lastPrestigeAt DateTime?
+
+  save GameSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
+
+  @@map("prestige_state")
+}
+
+// ============================================================================
+// R&D / TECHNOLOGIES
+// ============================================================================
+
+model TechDefinition {
+  id            String       @id @default(cuid())
+  slug          String       @unique
+  name          String
+  description   String
+  era           Int
+  cost          Json
+  effects       Json
+  prerequisites String[]
+  isPersistent  Boolean      @default(false)
+  playerTeches  PlayerTech[]
+
+  @@index([era])
+  @@map("tech_definition")
+}
+
+model PlayerTech {
+  id           String    @id @default(cuid())
+  saveId       String
+  techId       String
+  isResearched Boolean   @default(false)
+  researchedAt DateTime?
+
+  save GameSave       @relation(fields: [saveId], references: [id], onDelete: Cascade)
+  tech TechDefinition @relation(fields: [techId], references: [id], onDelete: Restrict)
+
+  @@unique([saveId, techId])
+  @@map("player_tech")
+}
+
+// ============================================================================
+// PROGRESSION — MILESTONES
+// ============================================================================
+
+model MilestoneDefinition {
+  id               String            @id @default(cuid())
+  slug             String            @unique
   name             String
-  gameState        Json     @map("game_state") @db.JsonB
-  lastCalculatedAt DateTime @map("last_calculated_at")
-  totalPlaytime    Int      @default(0) @map("total_playtime")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  description      String
+  condition        Json
+  reward           Json
+  order            Int
+  playerMilestones PlayerMilestone[]
 
-  @@unique([userId, slotNumber])
-  @@index([userId])
-  @@index([updatedAt])
-  @@map("saves")
+  @@map("milestone_definition")
+}
+
+model PlayerMilestone {
+  id          String    @id @default(cuid())
+  saveId      String
+  milestoneId String
+  isCompleted Boolean   @default(false)
+  completedAt DateTime?
+
+  save      GameSave            @relation(fields: [saveId], references: [id], onDelete: Cascade)
+  milestone MilestoneDefinition @relation(fields: [milestoneId], references: [id], onDelete: Restrict)
+
+  @@unique([saveId, milestoneId])
+  @@map("player_milestone")
+}
+
+// ============================================================================
+// ACHIEVEMENTS (cross-save, lié au User)
+// ============================================================================
+
+model Achievement {
+  id         String   @id @default(cuid())
+  userId     String
+  slug       String
+  unlockedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, slug])
+  @@map("achievement")
+}
+
+// ============================================================================
+// SUPPORTER / MONETISATION (Polar)
+// ============================================================================
+
+enum SupporterTier {
+  BRONZE
+  SILVER
+  GOLD
+}
+
+model Supporter {
+  id              String        @id @default(cuid())
+  userId          String        @unique
+  tier            SupporterTier
+  polarCustomerId String?
+  polarSubId      String?
+  isActive        Boolean       @default(true)
+  startedAt       DateTime      @default(now())
+  endedAt         DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("supporter")
+}
+
+// ============================================================================
+// EVENTS & CHALLENGES (v1.1+)
+// ============================================================================
+
+enum EventType {
+  BOOST
+  CHALLENGE
+  SEASONAL
+}
+
+model Event {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  name         String
+  description  String
+  type         EventType
+  effects      Json
+  startsAt     DateTime
+  endsAt       DateTime
+  playerEvents PlayerEvent[]
+
+  @@index([startsAt, endsAt])
+  @@map("event")
+}
+
+model PlayerEvent {
+  id            String  @id @default(cuid())
+  saveId        String
+  eventId       String
+  progress      Json    @default("{}")
+  isCompleted   Boolean @default(false)
+  rewardClaimed Boolean @default(false)
+
+  save  GameSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
+  event Event    @relation(fields: [eventId], references: [id], onDelete: Restrict)
+
+  @@unique([saveId, eventId])
+  @@map("player_event")
+}
+
+// ============================================================================
+// LEADERBOARD
+// ============================================================================
+
+enum LeaderboardCategory {
+  TOTAL_PRODUCTION
+  SPEED_RUN
+  PRESTIGE_COUNT
+  ERA_REACHED
+}
+
+model LeaderboardEntry {
+  id          String              @id @default(cuid())
+  userId      String
+  saveId      String
+  category    LeaderboardCategory
+  score       Decimal             @db.Decimal(30, 6)
+  era         Int
+  isSupporter Boolean             @default(false)
+  updatedAt   DateTime            @updatedAt
+
+  user User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  save GameSave @relation(fields: [saveId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
+  @@index([category, score(sort: Desc)])
+  @@index([saveId])
+  @@map("leaderboard_entry")
 }
