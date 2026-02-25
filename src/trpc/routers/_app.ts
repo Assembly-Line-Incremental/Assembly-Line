@@ -1,4 +1,8 @@
 import { createTRPCRouter } from "../init";
-export const appRouter = createTRPCRouter({});
+import { gameRouter } from "./game";
+
+export const appRouter = createTRPCRouter({
+	game: gameRouter,
+});
 
 export type AppRouter = typeof appRouter;

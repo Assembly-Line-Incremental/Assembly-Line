@@ -1,3 +1,5 @@
+import type { LucideIcon } from "lucide-react";
+
 export type ResourceId =
 	| "energy"
 	| "matter"
@@ -20,4 +22,34 @@ export interface ResourcesState {
 	data: number;
 	research: number;
 	waste: number;
+}
+
+/** Single source of truth — aliased from the Prisma generated enum. */
+export type { ResourceType } from "@/generated/prisma/client";
+
+export interface ResourceConfig {
+	/** Short display name */
+	label: string;
+	/** Lucide icon component */
+	icon: LucideIcon;
+	/** Hex accent colour used for the icon, glow, and highlights */
+	color: string;
+	/** Default maximum storage capacity (can be overridden by upgrades) */
+	maxStorage: number;
+	/**
+	 * Era from which this resource appears in the hotbar.
+	 * Mirrors the 6 eras defined in constants.ts.
+	 */
+	unlockEra: number;
+	/** When true, a high fill % signals danger (e.g. HEAT) */
+	highIsBad?: boolean;
+}
+
+export interface DisplayResource {
+	type: ResourceType;
+	amount: number;
+	totalProduced: number;
+	/** Production rate in units/second, derived from successive polls */
+	rate: number;
+	config: ResourceConfig;
 }

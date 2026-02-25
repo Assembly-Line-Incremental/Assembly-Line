@@ -52,7 +52,7 @@ const AuthLayout = ({ children }: { children: React.ReactNode }) => {
 
 			{/* Content */}
 			<div
-				className="relative z-10 flex w-full flex-col gap-8 px-6 py-12"
+				className="relative z-10 flex w-full flex-col gap-8 px-6 py-12 lg:max-w-md"
 				style={{ animation: "fade-in-up 0.8s ease-out both" }}
 			>
 				{/* Header with logo */}
