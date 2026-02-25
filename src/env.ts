@@ -8,6 +8,7 @@ export const env = createEnv({
 		DATABASE_URL: z.string(),
 		NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 		SENTRY_AUTH_TOKEN: z.string(),
+		BETTER_AUTH_SECRET: z.string(),
 	},
 
 	client: {
