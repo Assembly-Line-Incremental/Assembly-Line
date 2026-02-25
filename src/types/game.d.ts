@@ -2,6 +2,25 @@ import { ResourcesState } from "./resources";
 import { MachineId, MachineState } from "./machines";
 import { SynergyConfig, SynergyId } from "./synergy";
 
+export interface SaveInfo {
+	id: string;
+	slot: number;
+	name: string;
+	currentEra: number;
+	prestigeCount: number;
+	updatedAt: Date;
+}
+
+export interface GameSaveContextValue {
+	/** ID of the currently selected game save, null while loading. */
+	saveId: string | null;
+	/** Era of the active save, used to filter unlocked resources. */
+	currentEra: number;
+	saves: SaveInfo[];
+	isLoading: boolean;
+	switchSave: (saveId: string) => void;
+}
+
 export type TechId = string;
 export type RDNodeId = string;
 

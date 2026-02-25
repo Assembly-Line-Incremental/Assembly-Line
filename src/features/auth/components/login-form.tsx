@@ -43,11 +43,11 @@ const LoginForm = () => {
 			{
 				email: data.email,
 				password: data.password,
-				callbackURL: "/",
+				callbackURL: "/play",
 			},
 			{
 				onSuccess: () => {
-					router.push("/");
+					router.push("/play");
 				},
 				onError: (error) => {
 					toast.error(error.error.message);
