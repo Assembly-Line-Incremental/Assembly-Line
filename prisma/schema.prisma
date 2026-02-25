@@ -11,12 +11,21 @@ datasource db {
 // AUTHENTIFICATION (BetterAuth)
 // ============================================================================
 
+enum PresenceStatus {
+  ONLINE
+  IDLE
+  OFFLINE
+}
+
 model User {
   id            String  @id @default(cuid())
   name          String
   email         String  @unique
   emailVerified Boolean
   image         String?
+
+  presenceStatus  PresenceStatus @default(OFFLINE)
+  lastSeenAt      DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

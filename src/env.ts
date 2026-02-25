@@ -9,6 +9,7 @@ export const env = createEnv({
 		NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 		SENTRY_AUTH_TOKEN: z.string(),
 		BETTER_AUTH_SECRET: z.string(),
+		CRON_SECRET: z.string(),
 	},
 
 	client: {
