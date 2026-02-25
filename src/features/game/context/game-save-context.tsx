@@ -1,39 +1,55 @@
 "use client";
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTRPC } from "@/trpc/client";
+import { useSavesStream } from "../hooks/use-saves-stream";
 import type { GameSaveContextValue } from "@/types";
 
 const GameSaveContext = createContext<GameSaveContextValue | null>(null);
 
-const LS_KEY = "assemblyline:activeSaveId";
-
 export function GameSaveProvider({ children }: { children: ReactNode }) {
 	const trpc = useTRPC();
-	const [manualSaveId, setManualSaveId] = useState<string | null>(() =>
-		typeof window !== "undefined" ? localStorage.getItem(LS_KEY) : null
-	);
+	const queryClient = useQueryClient();
+	useSavesStream();
 
-	const { data: saves = [], isLoading } = useQuery(trpc.game.saves.queryOptions());
+	const savesQueryKey = trpc.game.saves.queryOptions().queryKey;
 
-	// Derive active save: prefer manualSaveId if valid, then slot 1, then first save.
+	const { data, isLoading } = useQuery({
+		...trpc.game.saves.queryOptions(),
+		refetchInterval: 30_000,
+		refetchIntervalInBackground: false,
+	});
+
+	const saves = data?.saves ?? [];
+	const maxSaves = data?.maxSaves ?? 2;
+	const activeSaveId = data?.activeSaveId ?? null;
+
+	// Active save is stored server-side and synced across all devices.
 	const saveId = useMemo(() => {
 		if (!saves.length) return null;
-		const match = manualSaveId ? saves.find((s) => s.id === manualSaveId) : null;
-		return (match ?? saves.find((s) => s.slot === 1) ?? saves[0])?.id ?? null;
-	}, [saves, manualSaveId]);
+		const serverActive = activeSaveId ? saves.find((s) => s.id === activeSaveId) : null;
+		return (serverActive ?? saves.find((s) => s.slot === 1) ?? saves[0])?.id ?? null;
+	}, [saves, activeSaveId]);
 
-	const switchSave = useCallback((id: string) => {
-		setManualSaveId(id);
-		localStorage.setItem(LS_KEY, id);
-	}, []);
+	const setActiveSave = useMutation(
+		trpc.game.setActiveSave.mutationOptions({
+			onSuccess: () => queryClient.invalidateQueries({ queryKey: savesQueryKey }),
+		})
+	);
+
+	const switchSave = useCallback(
+		(id: string) => {
+			setActiveSave.mutate({ saveId: id });
+		},
+		[setActiveSave]
+	);
 
 	const currentEra = saves.find((s) => s.id === saveId)?.currentEra ?? 1;
 
 	const value = useMemo<GameSaveContextValue>(
-		() => ({ saveId, currentEra, saves, isLoading, switchSave }),
-		[saveId, currentEra, saves, isLoading, switchSave]
+		() => ({ saveId, currentEra, saves, maxSaves, isLoading, switchSave }),
+		[saveId, currentEra, saves, maxSaves, isLoading, switchSave]
 	);
 
 	return <GameSaveContext.Provider value={value}>{children}</GameSaveContext.Provider>;

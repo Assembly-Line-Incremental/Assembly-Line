@@ -1,6 +1,6 @@
 import { GameSaveProvider } from "@/features/game/context/game-save-context";
 import { PresenceManager } from "@/features/game/components/presence-manager";
-import { ResourceHeader } from "@/features/game/components/resource-header";
+import { ResourceHeader } from "@/features/game/components/resource-bar";
 
 export default function GameLayout({ children }: { children: React.ReactNode }) {
 	return (

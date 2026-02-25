@@ -49,7 +49,7 @@ export interface DisplayResource {
 	type: ResourceType;
 	amount: number;
 	totalProduced: number;
-	/** Production rate in units/second, derived from successive polls */
+	/** Net production rate in units/second, computed server-side from active machines */
 	rate: number;
 	config: ResourceConfig;
 }

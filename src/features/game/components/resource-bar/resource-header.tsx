@@ -4,9 +4,9 @@ import { memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGameResources } from "../hooks/use-game-resources";
+import { useGameResources } from "../../hooks/use-game-resources";
+import { UserMenu } from "../user-menu";
 import { ResourceChip } from "./resource-chip";
-import { UserMenu } from "./user-menu";
 
 export const ResourceHeader = memo(function ResourceHeader() {
 	const { resources, isLoading } = useGameResources();

@@ -23,6 +23,20 @@ export function usePresence() {
 	const { mutate: setIdle } = useMutation(trpc.game.setIdle.mutationOptions());
 	const { mutate: setOffline } = useMutation(trpc.game.setOffline.mutationOptions());
 
+	// Stable refs so the effect never re-fires due to mutate identity changes
+	const heartbeatRef = useRef(heartbeat);
+	const setIdleRef = useRef(setIdle);
+	const setOfflineRef = useRef(setOffline);
+	useEffect(() => {
+		heartbeatRef.current = heartbeat;
+	}, [heartbeat]);
+	useEffect(() => {
+		setIdleRef.current = setIdle;
+	}, [setIdle]);
+	useEffect(() => {
+		setOfflineRef.current = setOffline;
+	}, [setOffline]);
+
 	const isIdleRef = useRef(false);
 	const idleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const heartbeatTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -35,19 +49,19 @@ export function usePresence() {
 			if (isIdleRef.current) {
 				// Came back from idle → go online again
 				isIdleRef.current = false;
-				heartbeat();
+				heartbeatRef.current();
 			}
 
 			idleTimerRef.current = setTimeout(() => {
 				isIdleRef.current = true;
-				setIdle();
+				setIdleRef.current();
 			}, IDLE_TIMEOUT_MS);
 		}
 
 		// ── Heartbeat interval ──────────────────────────────────────────────
-		heartbeat(); // immediate on mount
+		heartbeatRef.current(); // immediate on mount
 		heartbeatTimerRef.current = setInterval(() => {
-			if (!isIdleRef.current) heartbeat();
+			if (!isIdleRef.current) heartbeatRef.current();
 		}, HEARTBEAT_INTERVAL_MS);
 
 		// ── Activity listeners ──────────────────────────────────────────────
@@ -61,7 +75,7 @@ export function usePresence() {
 			if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
 			idleTimerRef.current = null;
 			isIdleRef.current = true;
-			setOffline();
+			setOfflineRef.current();
 		}
 
 		function handleVisibilityChange() {
@@ -69,7 +83,7 @@ export function usePresence() {
 			else {
 				// Page became visible → reset presence
 				isIdleRef.current = false;
-				heartbeat();
+				heartbeatRef.current();
 				resetIdleTimer();
 			}
 		}
@@ -85,7 +99,7 @@ export function usePresence() {
 			});
 			document.removeEventListener("visibilitychange", handleVisibilityChange);
 			window.removeEventListener("beforeunload", handleHide);
-			setOffline();
+			setOfflineRef.current();
 		};
-	}, [heartbeat, setIdle, setOffline]);
+	}, []); // empty deps — stable via refs
 }
