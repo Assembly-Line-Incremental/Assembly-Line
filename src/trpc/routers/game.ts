@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "../init";
 import { prisma } from "@/lib/db";
+import { PresenceStatus } from "@/generated/prisma/client";
 
 export const gameRouter = createTRPCRouter({
 	/**
@@ -45,4 +46,47 @@ export const gameRouter = createTRPCRouter({
 				totalProduced: Number(r.totalProduced),
 			}));
 		}),
+
+	// ── Presence ────────────────────────────────────────────────────────────
+
+	/**
+	 * Called every ~30 s while the player is active.
+	 * Marks the user ONLINE and refreshes lastSeenAt.
+	 */
+	heartbeat: protectedProcedure.mutation(async ({ ctx }) => {
+		const now = new Date();
+		const minIntervalMs = 20_000;
+		await prisma.user.updateMany({
+			where: {
+				id: ctx.auth.user.id,
+				OR: [
+					{ lastSeenAt: null },
+					{ lastSeenAt: { lt: new Date(now.getTime() - minIntervalMs) } },
+				],
+			},
+			data: { presenceStatus: PresenceStatus.ONLINE, lastSeenAt: now },
+		});
+	}),
+
+	/**
+	 * Called after 10 min of inactivity (no mouse/keyboard events).
+	 * Marks the user IDLE without updating lastSeenAt.
+	 */
+	setIdle: protectedProcedure.mutation(async ({ ctx }) => {
+		await prisma.user.updateMany({
+			where: { id: ctx.auth.user.id },
+			data: { presenceStatus: PresenceStatus.IDLE },
+		});
+	}),
+
+	/**
+	 * Called on beforeunload / page hide.
+	 * Marks the user OFFLINE so the server can skip their tick.
+	 */
+	setOffline: protectedProcedure.mutation(async ({ ctx }) => {
+		await prisma.user.updateMany({
+			where: { id: ctx.auth.user.id },
+			data: { presenceStatus: PresenceStatus.OFFLINE, lastSeenAt: new Date() },
+		});
+	}),
 });
