@@ -25,16 +25,17 @@ jobs:
         runs-on: ubuntu-latest
         env:
             SKIP_ENV_VALIDATION: true
+            DATABASE_URL: "postgresql://fake:fake@localhost:5432/fake"
         steps:
             - uses: actions/checkout@v4
             - uses: oven-sh/setup-bun@v2
               with:
                   bun-version: latest
             - run: bun install --frozen-lockfile
-            - run: bun run prisma:generate
+            - run: bun run --cwd packages/db generate
             - run: bun run typecheck
 
-    # ── Deploy ────────────────────────────────────────────────────────
+    # ── Deploy web (Vercel) ───────────────────────────────────────────
     deploy-preview:
         name: Deploy Preview
         needs: [lint, typecheck]
@@ -56,6 +57,7 @@ jobs:
                   vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
                   vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
                   scope: ${{ secrets.VERCEL_ORG_ID }}
+                  # Root Directory must be set to apps/web in Vercel project settings
                   alias-domains: |
                       ${{ steps.branch-slug.outputs.slug }}.hrp.assembly-line.fr
             - name: Comment preview URL on PR
@@ -125,3 +127,30 @@ jobs:
                   vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
                   vercel-args: "--prod"
                   scope: ${{ secrets.VERCEL_ORG_ID }}
+
+    # ── Deploy api (Railway) ──────────────────────────────────────────
+    deploy-api-staging:
+        name: Deploy API Staging (Railway)
+        needs: [lint, typecheck]
+        if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: bervProject/railway-deploy@main
+              with:
+                  railway_token: ${{ secrets.RAILWAY_TOKEN }}
+                  service: assembly-line-api
+                  environment: staging
+
+    deploy-api-production:
+        name: Deploy API Production (Railway)
+        needs: [lint, typecheck]
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: bervProject/railway-deploy@main
+              with:
+                  railway_token: ${{ secrets.RAILWAY_TOKEN }}
+                  service: assembly-line-api
+                  environment: production
