@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="100 60 310 310" width="310" height="310">
+  <defs>
+    <linearGradient id="cyanFront" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00D4FF"/>
+      <stop offset="100%" stop-color="#0088BB"/>
+    </linearGradient>
+    <linearGradient id="cyanBack" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#005577"/>
+      <stop offset="100%" stop-color="#003B55"/>
+    </linearGradient>
+
+    <radialGradient id="coreGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FF8833" stop-opacity="0.4"/>
+      <stop offset="70%" stop-color="#FF4422" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#FF4422" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="coreCenter" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="35%" stop-color="#FFE0A0"/>
+      <stop offset="100%" stop-color="#FF6633"/>
+    </radialGradient>
+
+    <filter id="frontGlow" x="-15%" y="-15%" width="130%" height="130%">
+      <feGaussianBlur stdDeviation="2.5" result="b"/>
+      <feFlood flood-color="#00D4FF" flood-opacity="0.15" result="c"/>
+      <feComposite in="c" in2="b" operator="in" result="d"/>
+      <feMerge><feMergeNode in="d"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="coreGlowFilter" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feFlood flood-color="#FF8833" flood-opacity="0.6" result="c"/>
+      <feComposite in="c" in2="b" operator="in" result="d"/>
+      <feMerge><feMergeNode in="d"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="shadowFront">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000" flood-opacity="0.45"/>
+    </filter>
+
+    <!-- Masks to punch transparent holes -->
+    <mask id="backGearMask">
+      <rect x="0" y="0" width="512" height="512" fill="white"/>
+      <circle cx="355" cy="130" r="38" fill="black"/>
+    </mask>
+    <mask id="backInnerMask">
+      <rect x="0" y="0" width="512" height="512" fill="white"/>
+      <circle cx="355" cy="130" r="7" fill="black"/>
+    </mask>
+    <mask id="frontGearMask">
+      <rect x="0" y="0" width="512" height="512" fill="white"/>
+      <circle cx="256" cy="215" r="78" fill="black"/>
+    </mask>
+    <mask id="frontInnerMask">
+      <rect x="0" y="0" width="512" height="512" fill="white"/>
+      <circle cx="256" cy="215" r="14" fill="black"/>
+    </mask>
+
+    <style>
+      @keyframes spinCW {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      @keyframes spinCCW {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(-360deg); }
+      }
+      .gear-back {
+        animation: spinCW 20s linear infinite;
+        transform-origin: 355px 130px;
+      }
+      .gear-front {
+        animation: spinCCW 30s linear infinite;
+        transform-origin: 256px 215px;
+      }
+    </style>
+  </defs>
+
+  <!-- Back gear (masked to punch center hole) -->
+  <g mask="url(#backGearMask)">
+    <g class="gear-back" opacity="0.65">
+      <g transform="translate(355,130)">
+        <path d="M 42.50,-17.60 L 45.43,-7.21 L 57.60,-6.80 L 57.60,6.80 L 45.43,7.21 L 42.50,17.60 L 37.22,27.02 L 45.54,35.92 L 35.92,45.54 L 27.02,37.22 L 17.60,42.50 L 7.21,45.43 L 6.80,57.60 L -6.80,57.60 L -7.21,45.43 L -17.60,42.50 L -27.02,37.22 L -35.92,45.54 L -45.54,35.92 L -37.22,27.02 L -42.50,17.60 L -45.43,7.21 L -57.60,6.80 L -57.60,-6.80 L -45.43,-7.21 L -42.50,-17.60 L -37.22,-27.02 L -45.54,-35.92 L -35.92,-45.54 L -27.02,-37.22 L -17.60,-42.50 L -7.21,-45.43 L -6.80,-57.60 L 6.80,-57.60 L 7.21,-45.43 L 17.60,-42.50 L 27.02,-37.22 L 35.92,-45.54 L 45.54,-35.92 L 37.22,-27.02 Z" fill="url(#cyanBack)"/>
+      </g>
+    </g>
+  </g>
+  <!-- Back gear inner ring (masked to punch small center hole) -->
+  <g mask="url(#backInnerMask)">
+    <circle cx="355" cy="130" r="14" fill="url(#cyanBack)" opacity="0.6"/>
+  </g>
+
+  <!-- Front gear (masked to punch center hole) -->
+  <g mask="url(#frontGearMask)">
+    <g filter="url(#shadowFront)">
+      <g class="gear-front">
+        <g transform="translate(256,215)">
+          <path d="M 91.76,-24.59 L 94.41,-10.58 L 114.71,-8.23 L 114.71,8.23 L 94.41,10.58 L 91.76,24.59 L 87.05,38.04 L 103.45,50.22 L 95.22,64.48 L 76.47,56.37 L 67.18,67.18 L 56.37,76.47 L 64.48,95.22 L 50.22,103.45 L 38.04,87.05 L 24.59,91.76 L 10.58,94.41 L 8.23,114.71 L -8.23,114.71 L -10.58,94.41 L -24.59,91.76 L -38.04,87.05 L -50.22,103.45 L -64.48,95.22 L -56.37,76.47 L -67.18,67.18 L -76.47,56.37 L -95.22,64.48 L -103.45,50.22 L -87.05,38.04 L -91.76,24.59 L -94.41,10.58 L -114.71,8.23 L -114.71,-8.23 L -94.41,-10.58 L -91.76,-24.59 L -87.05,-38.04 L -103.45,-50.22 L -95.22,-64.48 L -76.47,-56.37 L -67.18,-67.18 L -56.37,-76.47 L -64.48,-95.22 L -50.22,-103.45 L -38.04,-87.05 L -24.59,-91.76 L -10.58,-94.41 L -8.23,-114.71 L 8.23,-114.71 L 10.58,-94.41 L 24.59,-91.76 L 38.04,-87.05 L 50.22,-103.45 L 64.48,-95.22 L 56.37,-76.47 L 67.18,-67.18 L 76.47,-56.37 L 95.22,-64.48 L 103.45,-50.22 L 87.05,-38.04 Z" fill="url(#cyanFront)" filter="url(#frontGlow)"/>
+        </g>
+      </g>
+    </g>
+  </g>
+  <!-- Front gear decorative ring -->
+  <circle cx="256" cy="215" r="72" fill="none" stroke="#00D4FF" stroke-width="1" opacity="0.12"/>
+  <!-- Front gear inner circle (masked to punch small center hole) -->
+  <g mask="url(#frontInnerMask)">
+    <circle cx="256" cy="215" r="24" fill="url(#cyanFront)" opacity="0.7"/>
+  </g>
+
+  <!-- Energy core -->
+  <circle cx="256" cy="215" r="55" fill="url(#coreGlow)"/>
+  <circle cx="256" cy="215" r="10" fill="url(#coreCenter)" filter="url(#coreGlowFilter)"/>
+  <circle cx="256" cy="215" r="3.5" fill="#fff" opacity="0.9"/>
+</svg>
