@@ -1,9 +1,9 @@
 "use client";
 
-import { memo } from "react";
-import { AnimatePresence, motion } from "motion/react";
+import { memo, useEffect, useRef, useState } from "react";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { formatRate, formatValue } from "../lib/format-resource";
+import { formatRate, formatValue } from "../../lib/format-resource";
 import type { DisplayResource } from "@/types";
 
 interface ResourceChipProps {
@@ -16,13 +16,40 @@ function getBarColor(pct: number): string {
 	return "#22C55E";
 }
 
+/** Interpolates amount locally at 20 tps using the last known rate. */
+function useInterpolatedAmount(amount: number, rate: number): number {
+	const [display, setDisplay] = useState(amount);
+	const baseRef = useRef<{ amount: number; rate: number; ts: number } | null>(null);
+
+	// When a new poll arrives, reset the base
+	useEffect(() => {
+		const ts = Date.now();
+		baseRef.current = { amount, rate, ts };
+		const id = setTimeout(() => setDisplay(amount), 0);
+		return () => clearTimeout(id);
+	}, [amount, rate]);
+
+	useEffect(() => {
+		if (rate === 0) return;
+		const id = setInterval(() => {
+			if (!baseRef.current) return;
+			const { amount: base, rate: r, ts } = baseRef.current;
+			const elapsed = (Date.now() - ts) / 1_000;
+			setDisplay(base + r * elapsed);
+		}, 50);
+		return () => clearInterval(id);
+	}, [rate]);
+
+	return display;
+}
+
 export const ResourceChip = memo(function ResourceChip({ resource }: ResourceChipProps) {
 	const { config, amount, rate } = resource;
 	const { icon: Icon, label, color, maxStorage } = config;
 
-	const pct = maxStorage > 0 ? Math.min(100, Math.max(0, (amount / maxStorage) * 100)) : 0;
+	const interpolated = useInterpolatedAmount(amount, rate);
+	const pct = maxStorage > 0 ? Math.min(100, Math.max(0, (interpolated / maxStorage) * 100)) : 0;
 	const barColor = getBarColor(pct);
-	const displayValue = formatValue(amount);
 	const displayRate = formatRate(rate);
 
 	const isPositive = rate > 0.01;
@@ -56,18 +83,9 @@ export const ResourceChip = memo(function ResourceChip({ resource }: ResourceChi
 
 				{/* Push value+rate to the right */}
 				<div className="ml-auto flex items-baseline gap-1.25">
-					<AnimatePresence mode="wait" initial={false}>
-						<motion.span
-							key={displayValue}
-							initial={{ opacity: 0.4, y: -3 }}
-							animate={{ opacity: 1, y: 0 }}
-							exit={{ opacity: 0, y: 3 }}
-							transition={{ duration: 0.15, ease: "easeOut" }}
-							className="font-mono text-[15px] leading-none font-bold text-white"
-						>
-							{displayValue}
-						</motion.span>
-					</AnimatePresence>
+					<span className="font-mono text-[15px] leading-none font-bold text-white">
+						{formatValue(interpolated)}
+					</span>
 
 					<span
 						className={cn(

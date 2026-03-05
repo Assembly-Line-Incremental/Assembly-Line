@@ -17,6 +17,7 @@ export interface GameSaveContextValue {
 	/** Era of the active save, used to filter unlocked resources. */
 	currentEra: number;
 	saves: SaveInfo[];
+	maxSaves: number;
 	isLoading: boolean;
 	switchSave: (saveId: string) => void;
 }

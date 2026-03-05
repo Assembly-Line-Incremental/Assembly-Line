@@ -7,6 +7,7 @@ import { env } from "@/env";
 
 export const auth = betterAuth({
 	baseURL: env.NEXT_PUBLIC_URL,
+	trustedOrigins: [env.NEXT_PUBLIC_URL, "https://*.assembly-line.fr"],
 	secret: env.BETTER_AUTH_SECRET,
 	database: prismaAdapter(prisma, {
 		provider: "postgresql",
