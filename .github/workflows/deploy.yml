@@ -136,6 +136,7 @@ jobs:
         runs-on: ubuntu-latest
         env:
             RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+            RAILWAY_ENVIRONMENT: staging
         steps:
             - uses: actions/checkout@v4
             - uses: bervProject/railway-deploy@main
@@ -149,6 +150,7 @@ jobs:
         runs-on: ubuntu-latest
         env:
             RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+            RAILWAY_ENVIRONMENT: production
         steps:
             - uses: actions/checkout@v4
             - uses: bervProject/railway-deploy@main
