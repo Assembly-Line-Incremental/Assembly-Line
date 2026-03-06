@@ -135,8 +135,7 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
         runs-on: ubuntu-latest
         env:
-            RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-            RAILWAY_ENVIRONMENT: staging
+            RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
         steps:
             - uses: actions/checkout@v4
             - uses: bervProject/railway-deploy@main
@@ -149,8 +148,7 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         runs-on: ubuntu-latest
         env:
-            RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-            RAILWAY_ENVIRONMENT: production
+            RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PRODUCTION }}
         steps:
             - uses: actions/checkout@v4
             - uses: bervProject/railway-deploy@main
