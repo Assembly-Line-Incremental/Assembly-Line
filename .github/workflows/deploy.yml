@@ -137,7 +137,7 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - name: Deploy to Railway (staging)
-              run: npx @railway/cli@latest up --service assembly-line-api --detach
+              run: npx @railway/cli@latest up --service Assembly-Line --detach
               env:
                   RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_STAGING }}
 
@@ -149,6 +149,6 @@ jobs:
         steps:
             - uses: actions/checkout@v4
             - name: Deploy to Railway (production)
-              run: npx @railway/cli@latest up --service assembly-line-api --detach
+              run: npx @railway/cli@latest up --service Assembly-Line --detach
               env:
                   RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN_PRODUCTION }}
