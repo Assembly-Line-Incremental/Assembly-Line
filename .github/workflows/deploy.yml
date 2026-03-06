@@ -134,23 +134,25 @@ jobs:
         needs: [lint, typecheck]
         if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
         runs-on: ubuntu-latest
+        env:
+            RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+            RAILWAY_ENVIRONMENT: staging
         steps:
             - uses: actions/checkout@v4
             - uses: bervProject/railway-deploy@main
               with:
-                  railway_token: ${{ secrets.RAILWAY_TOKEN }}
                   service: assembly-line-api
-                  environment: staging
 
     deploy-api-production:
         name: Deploy API Production (Railway)
         needs: [lint, typecheck]
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         runs-on: ubuntu-latest
+        env:
+            RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+            RAILWAY_ENVIRONMENT: production
         steps:
             - uses: actions/checkout@v4
             - uses: bervProject/railway-deploy@main
               with:
-                  railway_token: ${{ secrets.RAILWAY_TOKEN }}
                   service: assembly-line-api
-                  environment: production
