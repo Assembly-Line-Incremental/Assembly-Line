@@ -13,7 +13,7 @@ import { AnimatedCounter } from "@/features/landing/components/animated-counter"
 import { FeatureCard } from "@/features/landing/components/feature-card";
 import { Navbar } from "@/features/landing/components/navbar";
 import { ConveyorBelt } from "@/features/landing/components/conveyor-belt";
-import { FEATURES, ERAS, PIPELINE_STEPS, STATS } from "@/features/landing/components/constants";
+import { FEATURES, ERAS, PIPELINE_STEPS, STATS } from "@/features/landing/constants";
 
 export default function Home() {
 	return (
@@ -535,30 +535,42 @@ export default function Home() {
 
 					{/* Links */}
 					<div className="flex items-center gap-4 sm:gap-5">
-						<a
+						<Link
 							href="#features"
 							className="text-xs text-white/30 transition-colors hover:text-white/60 sm:text-sm"
 						>
 							Features
-						</a>
-						<a
+						</Link>
+						<Link
 							href="#pipeline"
 							className="text-xs text-white/30 transition-colors hover:text-white/60 sm:text-sm"
 						>
 							Pipeline
-						</a>
-						<a
+						</Link>
+						<Link
 							href="#eras"
 							className="text-xs text-white/30 transition-colors hover:text-white/60 sm:text-sm"
 						>
 							Eras
-						</a>
-						<a
+						</Link>
+						<Link
 							href="#support"
 							className="text-xs text-white/30 transition-colors hover:text-white/60 sm:text-sm"
 						>
 							Support
-						</a>
+						</Link>
+						<Link
+							href="/confidentialite"
+							className="text-xs text-white/30 transition-colors hover:text-white/60 sm:text-sm"
+						>
+							Confidentialité
+						</Link>
+						<Link
+							href="/mentions-legales"
+							className="text-xs text-white/30 transition-colors hover:text-white/60 sm:text-sm"
+						>
+							Mentions légales
+						</Link>
 					</div>
 
 					{/* Socials + credit */}

@@ -144,6 +144,9 @@
 		@apply bg-background text-foreground;
 		letter-spacing: var(--tracking-normal);
 	}
+	button:not(:disabled) {
+		cursor: pointer;
+	}
 }
 
 /* Assembly Line game theme */

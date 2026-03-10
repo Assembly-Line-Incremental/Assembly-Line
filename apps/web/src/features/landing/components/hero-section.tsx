@@ -98,10 +98,10 @@ export function HeroSection() {
 						size="lg"
 						className="h-12 rounded-2xl border-white/8 bg-white/3 font-medium text-white/70 backdrop-blur-sm transition-all duration-300 hover:border-[#00D4FF]/20 hover:bg-white/6 hover:text-white sm:h-14 sm:flex-3 sm:text-base"
 					>
-						<a href="#features">
+						<Link href="#features">
 							Learn More
 							<ArrowRight size={16} />
-						</a>
+						</Link>
 					</Button>
 				</div>
 

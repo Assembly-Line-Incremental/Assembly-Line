@@ -50,14 +50,14 @@ export function Navbar() {
 				{/* Desktop links */}
 				<div className="hidden items-center gap-0.5 md:flex">
 					{NAV_LINKS.map((link) => (
-						<a
+						<Link
 							key={link.href}
 							href={link.href}
 							className="group relative rounded-full px-3.5 py-1.5 text-sm text-white/45 transition-colors hover:text-white/90"
 						>
 							{link.label}
 							<span className="absolute bottom-0 left-1/2 h-[3px] w-[3px] -translate-x-1/2 rounded-full bg-[#00D4FF] opacity-0 transition-all group-hover:opacity-80" />
-						</a>
+						</Link>
 					))}
 				</div>
 
@@ -95,14 +95,14 @@ export function Navbar() {
 				<div className="rounded-2xl border border-white/6 bg-[#0A1A2F]/95 p-4 backdrop-blur-xl">
 					<div className="flex flex-col gap-1">
 						{NAV_LINKS.map((link) => (
-							<a
+							<Link
 								key={link.href}
 								href={link.href}
 								onClick={() => setMobileOpen(false)}
 								className="rounded-xl px-3 py-2.5 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white"
 							>
 								{link.label}
-							</a>
+							</Link>
 						))}
 						<Separator className="mt-2 bg-white/5" />
 						<div className="pt-3">

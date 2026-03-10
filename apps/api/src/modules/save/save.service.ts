@@ -256,15 +256,23 @@ export class SaveService {
 		}
 
 		// Transaction: deduct resources + upsert PlayerMachine
+		// Sort by type to ensure consistent lock ordering and avoid deadlocks
 		const pm = await prisma.$transaction(async (tx) => {
-			await Promise.all(
-				Object.entries(costs).map(([type, cost]) =>
-					tx.resource.update({
-						where: { saveId_type: { saveId, type: type as ResourceType } },
-						data: { amount: { decrement: cost } },
-					})
-				)
-			);
+			for (const [type, cost] of Object.entries(costs).sort(([a], [b]) =>
+				a.localeCompare(b)
+			)) {
+				const result = await tx.resource.updateMany({
+					where: {
+						saveId,
+						type: type as ResourceType,
+						amount: { gte: cost },
+					},
+					data: { amount: { decrement: cost } },
+				});
+				if (result.count === 0) {
+					throw new BadRequestException(`Insufficient ${type}`);
+				}
+			}
 			return tx.playerMachine.upsert({
 				where: { saveId_machineId: { saveId, machineId } },
 				create: { saveId, machineId, count, isActive: true },

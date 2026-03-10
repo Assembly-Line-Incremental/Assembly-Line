@@ -3,7 +3,18 @@ import "./src/env";
 
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {};
+const nextConfig: NextConfig = {
+	serverExternalPackages: ["geoip-lite"],
+	images: {
+		dangerouslyAllowSVG: true,
+		remotePatterns: [
+			{
+				protocol: "https",
+				hostname: "api.dicebear.com",
+			},
+		],
+	},
+};
 
 export default withSentryConfig(nextConfig, {
 	// For all available options, see:

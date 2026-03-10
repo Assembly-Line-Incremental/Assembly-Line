@@ -21,6 +21,8 @@ export const env = createEnv({
 		API_URL: z.string().default("http://localhost:3001"),
 		/** Shared secret for server-to-server calls between apps/web and apps/api. */
 		INTERNAL_SECRET: z.string(),
+		/** Uploadthing API token for avatar uploads. */
+		UPLOADTHING_TOKEN: z.string(),
 	},
 
 	client: {

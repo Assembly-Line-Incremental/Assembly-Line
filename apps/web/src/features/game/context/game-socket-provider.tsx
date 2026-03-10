@@ -45,6 +45,12 @@ export function GameSocketProvider({ children }: { children: React.ReactNode }) 
 				transports: ["websocket"],
 			});
 
+			socket.on("connect", () => {
+				queryClientRef.current.invalidateQueries({
+					queryKey: trpcRef.current.user.getMe.queryKey(),
+				});
+			});
+
 			socket.on("save:changed", () => {
 				const queryKey = trpcRef.current.game.saves.queryOptions().queryKey;
 				queryClientRef.current.invalidateQueries({ queryKey });

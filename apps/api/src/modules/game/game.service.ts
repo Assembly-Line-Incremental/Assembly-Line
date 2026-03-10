@@ -46,6 +46,7 @@ export class GameService implements OnModuleInit, OnModuleDestroy {
 	/** In-memory state for each active save (online users only) */
 	private readonly state = new Map<string, SaveState>();
 	private tickInterval?: ReturnType<typeof setInterval>;
+	private sessionCleanupInterval?: ReturnType<typeof setInterval>;
 
 	private readonly DB_WRITE_EVERY = 30; // ticks between DB writes (~30s)
 	private readonly MAX_OFFLINE_SECONDS = 8 * 60 * 60; // 8h offline catch-up cap
@@ -54,11 +55,31 @@ export class GameService implements OnModuleInit, OnModuleDestroy {
 
 	onModuleInit(): void {
 		this.tickInterval = setInterval(() => void this.tick(), 1000);
+		// RGPD: purge expired sessions every hour
+		this.cleanupExpiredSessions().catch((err) =>
+			console.error("[GameService] Session cleanup failed:", err)
+		);
+		this.sessionCleanupInterval = setInterval(
+			() =>
+				this.cleanupExpiredSessions().catch((err) =>
+					console.error("[GameService] Session cleanup failed:", err)
+				),
+			60 * 60 * 1000
+		);
 	}
 
-	onModuleDestroy(): void {
+	async onModuleDestroy(): Promise<void> {
 		clearInterval(this.tickInterval);
-		void this.flushAll();
+		clearInterval(this.sessionCleanupInterval);
+		try {
+			await this.flushAll();
+		} catch (err) {
+			console.error("[GameService] flushAll failed during shutdown:", err);
+		}
+	}
+
+	private async cleanupExpiredSessions(): Promise<void> {
+		await prisma.session.deleteMany({ where: { expiresAt: { lt: new Date() } } });
 	}
 
 	private async tick(): Promise<void> {
@@ -186,12 +207,14 @@ export class GameService implements OnModuleInit, OnModuleDestroy {
 		now: number
 	): Promise<void> {
 		await prisma.$transaction([
-			...Object.entries(amounts).map(([type, amount]) =>
-				prisma.resource.update({
-					where: { saveId_type: { saveId, type: type as ResourceType } },
-					data: { amount },
-				})
-			),
+			...Object.entries(amounts)
+				.sort(([a], [b]) => a.localeCompare(b))
+				.map(([type, amount]) =>
+					prisma.resource.update({
+						where: { saveId_type: { saveId, type: type as ResourceType } },
+						data: { amount },
+					})
+				),
 			prisma.gameSave.update({
 				where: { id: saveId },
 				data: { lastTickAt: new Date(now) },

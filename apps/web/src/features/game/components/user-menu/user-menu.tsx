@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown, LogOut, Plus, Settings, Trophy, UserRound } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth/auth-client";
 import { useTRPC } from "@/trpc/client";
 import { useGameSave } from "@/features/game/context/game-save-context";
@@ -24,6 +24,7 @@ export function UserMenu() {
 	const trpc = useTRPC();
 	const queryClient = useQueryClient();
 
+	const { data: profile } = useQuery({ ...trpc.user.getMe.queryOptions(), enabled: !!session });
 	const savesQueryKey = trpc.game.saves.queryOptions().queryKey;
 
 	const createSave = useMutation(
@@ -118,7 +119,9 @@ export function UserMenu() {
 	}
 	if (!session) return null;
 
-	const { name, email } = session.user;
+	const name = profile?.name ?? session.user.name;
+	const email = profile?.email ?? session.user.email;
+	const image = profile?.image ?? session.user.image ?? null;
 	const canAddSave = saves.length < maxSaves;
 
 	return (
@@ -133,7 +136,7 @@ export function UserMenu() {
 				onClick={() => setOpen((v) => !v)}
 				className="group flex items-center gap-2 rounded-xl p-1 pr-2 transition-colors duration-150 hover:bg-white/6"
 			>
-				<Avatar name={name} size="sm" />
+				<Avatar name={name} image={image} size="sm" />
 				<ChevronDown
 					size={15}
 					strokeWidth={2.5}
@@ -160,7 +163,7 @@ export function UserMenu() {
 					>
 						{/* ── User info ── */}
 						<div className="flex items-center gap-3 px-4 py-4">
-							<Avatar name={name} size="lg" />
+							<Avatar name={name} image={image} size="lg" />
 							<div className="min-w-0 flex-1">
 								<p className="truncate text-[13px] font-semibold text-white/90">
 									{name}
@@ -239,9 +242,9 @@ export function UserMenu() {
 
 						{/* ── Nav items ── */}
 						<div className="flex flex-col gap-y-0.5 p-2">
-							<MenuItem icon={UserRound} label="Profile" href="/profile" />
+							<MenuItem icon={UserRound} label="Mon profil" href="/profile" />
 							<MenuItem icon={Trophy} label="Leaderboard" href="/leaderboard" />
-							<MenuItem icon={Settings} label="Settings" href="/play/settings" />
+							<MenuItem icon={Settings} label="Settings" href="/profile/settings" />
 						</div>
 
 						<div className="mx-3 h-px bg-white/6" />

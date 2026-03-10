@@ -1,10 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
+import { useQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth/auth-client";
+import { useTRPC } from "@/trpc/client";
 import { toast } from "sonner";
 import {
 	Form,
@@ -19,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import Link from "next/link";
-import { Loader2, Mail, Lock, User } from "lucide-react";
+import { CheckCircle2, Loader2, Mail, Lock, User, XCircle } from "lucide-react";
 import type { OAuthProvider } from "@/lib/auth/oauth-providers";
 import { oauthConfig } from "@/lib/auth/oauth-providers";
 
@@ -28,6 +31,7 @@ const registerSchema = z
 		username: z
 			.string()
 			.min(3, "Username must be at least 3 characters long")
+			.max(20, "Username must be at most 20 characters long")
 			.regex(
 				/^[a-zA-Z0-9_-]+$/,
 				"Username can only contain letters, numbers, underscores, and hyphens"
@@ -45,6 +49,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const RegisterForm = ({ enabledProviders }: { enabledProviders: OAuthProvider[] }) => {
 	const router = useRouter();
+	const trpc = useTRPC();
 	const form = useForm({
 		resolver: zodResolver(registerSchema),
 		defaultValues: {
@@ -55,10 +60,43 @@ const RegisterForm = ({ enabledProviders }: { enabledProviders: OAuthProvider[] 
 		},
 	});
 
+	// ── Debounced username availability check ──
+	const username = form.watch("username");
+	const [debouncedUsername, setDebouncedUsername] = useState("");
+
+	useEffect(() => {
+		const timeout = setTimeout(() => setDebouncedUsername(username), 500);
+		return () => clearTimeout(timeout);
+	}, [username]);
+
+	const normalizedUsername = debouncedUsername.toLowerCase();
+	const isValidFormat =
+		normalizedUsername.length >= 3 && /^[a-zA-Z0-9_-]+$/.test(normalizedUsername);
+
+	const { data: nameCheck, isFetching: isCheckingName } = useQuery({
+		...trpc.user.checkNameAvailable.queryOptions({ name: normalizedUsername }),
+		enabled: isValidFormat,
+		staleTime: 10_000,
+	});
+
+	// Stable suggestions — generated once when the name is found taken, not on every render
+	const [suggestions, setSuggestions] = useState<string[]>([]);
+	useEffect(() => {
+		if (isValidFormat && nameCheck?.available === false) {
+			setSuggestions([
+				`${normalizedUsername.slice(0, 15)}${Math.floor(Math.random() * 99) + 1}`,
+				`${normalizedUsername.slice(0, 14)}_${Math.floor(Math.random() * 99) + 1}`,
+			]);
+		} else {
+			setSuggestions([]);
+		}
+		// intentionally excludes Math.random from deps to keep suggestions stable
+	}, [isValidFormat, nameCheck?.available, normalizedUsername]);
+
 	const onSubmit = async (data: RegisterFormValues) => {
 		await authClient.signUp.email(
 			{
-				name: data.username,
+				name: data.username.toLowerCase(),
 				email: data.email,
 				password: data.password,
 			},
@@ -67,7 +105,14 @@ const RegisterForm = ({ enabledProviders }: { enabledProviders: OAuthProvider[] 
 					router.push("/");
 				},
 				onError: (error) => {
-					toast.error(error.error.message);
+					// Surface name conflict as a field error
+					if (error.error.message?.toLowerCase().includes("name")) {
+						form.setError("username", {
+							message: "Ce pseudo est déjà pris.",
+						});
+					} else {
+						toast.error(error.error.message);
+					}
 				},
 			}
 		);
@@ -143,9 +188,54 @@ const RegisterForm = ({ enabledProviders }: { enabledProviders: OAuthProvider[] 
 											className={inputClasses}
 											{...field}
 										/>
+										{/* Availability indicator */}
+										{isValidFormat && (
+											<div className="absolute top-1/2 right-3.5 -translate-y-1/2">
+												{isCheckingName ? (
+													<Loader2
+														size={14}
+														className="animate-spin text-white/20"
+													/>
+												) : nameCheck?.available ? (
+													<CheckCircle2
+														size={14}
+														className="text-emerald-400/70"
+													/>
+												) : nameCheck?.available === false ? (
+													<XCircle
+														size={14}
+														className="text-red-400/70"
+													/>
+												) : null}
+											</div>
+										)}
 									</div>
 								</FormControl>
 								<FormMessage />
+								{/* Suggestions when name is taken */}
+								{isValidFormat &&
+									nameCheck?.available === false &&
+									suggestions.length > 0 && (
+										<p className="text-[11px] text-white/30">
+											Essaie :{" "}
+											{suggestions
+												.map((s) => (
+													<button
+														key={s}
+														type="button"
+														onClick={() =>
+															form.setValue("username", s, {
+																shouldValidate: true,
+															})
+														}
+														className="text-white/50 underline-offset-2 hover:text-white/80 hover:underline"
+													>
+														{s}
+													</button>
+												))
+												.flatMap((el, i) => (i === 0 ? [el] : [", ", el]))}
+										</p>
+									)}
 							</FormItem>
 						)}
 					/>
@@ -233,7 +323,7 @@ const RegisterForm = ({ enabledProviders }: { enabledProviders: OAuthProvider[] 
 					<Button
 						type="submit"
 						variant="ghost"
-						disabled={isPending}
+						disabled={isPending || nameCheck?.available === false}
 						className="from-game-cyan to-game-cyan-muted text-game-bg hover:from-game-cyan hover:to-game-cyan-muted hover:text-game-bg mt-1 h-12 w-full rounded-2xl bg-linear-to-r text-sm font-bold shadow-[0_0_30px_rgba(0,212,255,0.2)] transition-all duration-300 hover:bg-linear-to-r hover:opacity-90 hover:shadow-[0_0_40px_rgba(0,212,255,0.3)]"
 					>
 						{isPending ? (

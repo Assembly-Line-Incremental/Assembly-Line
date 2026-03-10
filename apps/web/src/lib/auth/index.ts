@@ -23,6 +23,16 @@ export const auth = betterAuth({
 		enabled: true,
 		autoSignIn: true,
 	},
+	user: {
+		deleteUser: {
+			enabled: true,
+		},
+	},
+	account: {
+		accountLinking: {
+			allowDifferentEmails: true,
+		},
+	},
 	socialProviders: {
 		...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET
 			? {
@@ -65,6 +75,43 @@ export const auth = betterAuth({
 	databaseHooks: {
 		user: {
 			create: {
+				before: async (user) => {
+					// Sanitize names from OAuth providers (may contain spaces, dots, "@", etc.)
+					const raw = (
+						user.name
+							.trim()
+							.replace(/[^a-zA-Z0-9_-]/g, "_")
+							.replace(/_+/g, "_")
+							.replace(/^_|_$/, "")
+							.slice(0, 20) || "player"
+					).toLowerCase();
+					const sanitized = raw.length < 3 ? raw.padEnd(3, "0") : raw;
+
+					// Name is already valid (email registration) — don't touch it
+					if (sanitized === user.name) return;
+
+					// Check if sanitized name is free
+					const existing = await prisma.user.findUnique({ where: { name: sanitized } });
+					if (!existing) return { data: { ...user, name: sanitized } };
+
+					// Find a unique name with a number suffix
+					const base = sanitized.slice(0, 17);
+					for (let i = 1; i <= 99; i++) {
+						const candidate = `${base}${i}`;
+						const conflict = await prisma.user.findUnique({
+							where: { name: candidate },
+						});
+						if (!conflict) return { data: { ...user, name: candidate } };
+					}
+
+					// Last resort
+					return {
+						data: {
+							...user,
+							name: `${sanitized.slice(0, 12)}${Date.now().toString(36).slice(-6)}`,
+						},
+					};
+				},
 				after: async (user) => {
 					try {
 						await prisma.$transaction(async (tx) => {
