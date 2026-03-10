@@ -1,6 +1,0 @@
-reviews:
-    path_filters:
-        - "!bun.lock"
-        - "!apps/web/public/**"
-        - "!apps/web/sentry.edge.config.ts"
-        - "!apps/web/sentry.server.config.ts"
