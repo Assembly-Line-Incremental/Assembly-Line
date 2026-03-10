@@ -20,6 +20,8 @@ import { Separator } from "@/components/ui/separator";
 import Image from "next/image";
 import Link from "next/link";
 import { Loader2, Mail, Lock } from "lucide-react";
+import type { OAuthProvider } from "@/lib/auth/oauth-providers";
+import { oauthConfig } from "@/lib/auth/oauth-providers";
 
 const loginSchema = z.object({
 	email: z.email("Please provide a valid email address"),
@@ -28,7 +30,7 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-const LoginForm = () => {
+const LoginForm = ({ enabledProviders }: { enabledProviders: OAuthProvider[] }) => {
 	const router = useRouter();
 	const form = useForm({
 		resolver: zodResolver(loginSchema),
@@ -64,36 +66,44 @@ const LoginForm = () => {
 	return (
 		<div className="flex flex-col gap-5">
 			{/* OAuth buttons */}
-			<div className="flex gap-3">
-				<Button
-					variant="outline"
-					className="bg-game-bg-deep hover:border-game-cyan/25 hover:bg-game-bg-deep h-11 flex-1 rounded-xl border-white/10 text-sm font-medium text-white/60 transition-all duration-300 hover:text-white/90"
-					type="button"
-					disabled={isPending}
-					onClick={() => authClient.signIn.social({ provider: "github" })}
-				>
-					<Image src="/logos/github.svg" width={18} height={18} alt="GitHub logo" />
-					GitHub
-				</Button>
-				<Button
-					variant="outline"
-					className="bg-game-bg-deep hover:border-game-cyan/25 hover:bg-game-bg-deep h-11 flex-1 rounded-xl border-white/10 text-sm font-medium text-white/60 transition-all duration-300 hover:text-white/90"
-					type="button"
-					disabled={isPending}
-				>
-					<Image src="/logos/google.svg" width={18} height={18} alt="Google logo" />
-					Google
-				</Button>
-			</div>
+			{enabledProviders.length > 0 && (
+				<>
+					<div className="grid grid-cols-2 gap-3">
+						{enabledProviders.map((provider) => (
+							<Button
+								key={provider}
+								variant="outline"
+								className="bg-game-bg-deep hover:border-game-cyan/25 hover:bg-game-bg-deep h-11 rounded-xl border-white/10 text-sm font-medium text-white/60 transition-all duration-300 hover:text-white/90"
+								type="button"
+								disabled={isPending}
+								onClick={() =>
+									authClient.signIn.social({
+										provider,
+										callbackURL: window.location.origin + "/play",
+									})
+								}
+							>
+								<Image
+									src={oauthConfig[provider].logo}
+									width={18}
+									height={18}
+									alt={`${oauthConfig[provider].label} logo`}
+								/>
+								{oauthConfig[provider].label}
+							</Button>
+						))}
+					</div>
 
-			{/* Divider */}
-			<div className="flex items-center gap-4">
-				<Separator className="flex-1 bg-white/6" />
-				<span className="text-[11px] font-medium tracking-[0.15em] text-white/20 uppercase">
-					or
-				</span>
-				<Separator className="flex-1 bg-white/6" />
-			</div>
+					{/* Divider */}
+					<div className="flex items-center gap-4">
+						<Separator className="flex-1 bg-white/6" />
+						<span className="text-[11px] font-medium tracking-[0.15em] text-white/20 uppercase">
+							or
+						</span>
+						<Separator className="flex-1 bg-white/6" />
+					</div>
+				</>
+			)}
 
 			{/* Email / Password form */}
 			<Form {...form}>
