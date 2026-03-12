@@ -1,40 +1,42 @@
+import { useState } from "react";
 import { cn } from "@/lib/utils";
-
-const AVATAR_COLORS = [
-	{ bg: "#00D4FF15", text: "#00D4FF", ring: "#00D4FF25" },
-	{ bg: "#FF773315", text: "#FF7733", ring: "#FF773325" },
-	{ bg: "#FFBB4415", text: "#FFBB44", ring: "#FFBB4425" },
-	{ bg: "#A855F715", text: "#A855F7", ring: "#A855F725" },
-	{ bg: "#22C55E15", text: "#22C55E", ring: "#22C55E25" },
-];
-
-function getAvatarColor(name: string) {
-	let h = 0;
-	for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0;
-	return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
-}
-
-function getInitials(name: string) {
-	return name
-		.trim()
-		.split(/\s+/)
-		.slice(0, 2)
-		.map((w) => w[0]?.toUpperCase() ?? "")
-		.join("");
-}
+import { getAvatarColor, getInitials } from "@/features/profile/constants";
 
 export interface AvatarProps {
 	name: string;
+	image?: string | null;
 	size?: "sm" | "lg";
 }
 
-export function Avatar({ name, size = "sm" }: AvatarProps) {
+export function Avatar({ name, image, size = "sm" }: AvatarProps) {
 	const c = getAvatarColor(name);
+	const sizeClass = size === "lg" ? "h-10 w-10" : "h-9 w-9";
+	const [prevImage, setPrevImage] = useState(image);
+	const [imageError, setImageError] = useState(false);
+
+	if (image !== prevImage) {
+		setPrevImage(image);
+		setImageError(false);
+	}
+
+	if (image && !imageError) {
+		return (
+			<img
+				src={image}
+				alt={name}
+				className={cn("shrink-0 rounded-full object-cover ring-1", sizeClass)}
+				style={{ "--tw-ring-color": c.ring } as React.CSSProperties}
+				onError={() => setImageError(true)}
+			/>
+		);
+	}
+
 	return (
 		<div
 			className={cn(
 				"flex shrink-0 items-center justify-center rounded-full font-bold ring-1",
-				size === "lg" ? "h-10 w-10 text-sm" : "h-9 w-9 text-[14px]"
+				size === "lg" ? "text-sm" : "text-[14px]",
+				sizeClass
 			)}
 			style={
 				{

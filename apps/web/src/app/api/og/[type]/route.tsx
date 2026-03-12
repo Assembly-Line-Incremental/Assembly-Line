@@ -1,8 +1,7 @@
 import { ImageResponse } from "next/og";
 import { notFound } from "next/navigation";
 import { env } from "@/env";
-
-export const runtime = "edge";
+import { caller } from "@/trpc/server";
 
 const W = 1200;
 const H = 630;
@@ -26,19 +25,67 @@ const CONTENT = {
 		line2: "BUILDERS",
 		tagline: "Compete with players worldwide.",
 	},
+	user: {
+		eyebrow: "Player Profile · Assembly Line",
+		line1: "",
+		line2: "",
+		tagline: "Track progress, achievements and factory stats.",
+	},
 } as const;
 
 type OgType = keyof typeof CONTENT;
 
-export async function GET(_req: Request, { params }: { params: Promise<{ type: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ type: string }> }) {
 	const { type } = await params;
 
 	if (!(type in CONTENT)) {
 		notFound();
 	}
 
-	const { eyebrow, line1, line2, tagline } = CONTENT[type as OgType];
+	const url = new URL(req.url);
+	const rawUsername = url.searchParams.get("name");
+	const USERNAME_RE = /^[a-zA-Z0-9_-]{3,20}$/;
+	const username = rawUsername && USERNAME_RE.test(rawUsername) ? rawUsername : null;
+
+	const base = CONTENT[type as OgType];
+	const eyebrow = base.eyebrow;
+	const tagline = base.tagline;
 	const hostname = new URL(env.NEXT_PUBLIC_URL).hostname;
+
+	const isUser = type === "user";
+
+	// Fetch profile data for user OG
+	let line1 = isUser && username ? username.toUpperCase() : base.line1;
+	const line2 = isUser ? "ASSEMBLY LINE" : base.line2;
+
+	const statItems: { value: string; label: string }[] = [];
+	if (isUser && username) {
+		try {
+			const profile = await caller.user.getPublicProfile({ username });
+			if (profile?.isPublic) {
+				if (profile.name) line1 = profile.name.toUpperCase();
+				const maxEra = profile.gameSaves.reduce((max, s) => Math.max(max, s.currentEra), 0);
+				const totalPrestiges = profile.gameSaves.reduce(
+					(sum, s) => sum + s.prestigeCount,
+					0
+				);
+				if (profile._count.gameSaves > 0)
+					statItems.push({
+						value: String(profile._count.gameSaves),
+						label: profile._count.gameSaves === 1 ? "Sauvegarde" : "Sauvegardes",
+					});
+				if (profile.achievements.length > 0)
+					statItems.push({ value: String(profile.achievements.length), label: "Succès" });
+				if (maxEra > 1) statItems.push({ value: `Ère ${maxEra}`, label: "Meilleure ère" });
+				if (totalPrestiges > 0)
+					statItems.push({ value: `${totalPrestiges}×`, label: "Prestiges" });
+			}
+		} catch {
+			// silently ignore — show username only
+		}
+	}
+
+	const hasStats = statItems.length > 0;
 
 	return new ImageResponse(
 		<div
@@ -157,39 +204,104 @@ export async function GET(_req: Request, { params }: { params: Promise<{ type: s
 						letterSpacing: "-0.03em",
 						lineHeight: 1,
 						textAlign: "center",
+						maxWidth: 1060,
 					}}
 				>
 					{line1}
 				</span>
 
-				{/* Title line 2 — fire orange */}
-				<span
-					style={{
-						fontSize: 110,
-						fontWeight: 900,
-						color: "#FF7733",
-						letterSpacing: "-0.03em",
-						lineHeight: 1,
-						textAlign: "center",
-						marginBottom: 40,
-					}}
-				>
-					{line2}
-				</span>
+				{/* Title line 2 — fire orange (non-user only) */}
+				{!isUser && (
+					<span
+						style={{
+							fontSize: 110,
+							fontWeight: 900,
+							color: "#FF7733",
+							letterSpacing: "-0.03em",
+							lineHeight: 1,
+							textAlign: "center",
+							marginBottom: 40,
+						}}
+					>
+						{line2}
+					</span>
+				)}
 
-				{/* Tagline */}
-				<span
-					style={{
-						fontSize: 26,
-						fontWeight: 400,
-						color: "rgba(139,163,185,0.85)",
-						letterSpacing: "0.01em",
-						textAlign: "center",
-						maxWidth: 700,
-					}}
-				>
-					{tagline}
-				</span>
+				{/* Stats row — user type */}
+				{isUser && hasStats && (
+					<div
+						style={{
+							display: "flex",
+							alignItems: "center",
+							marginTop: 44,
+							paddingTop: 36,
+							borderTop: "1px solid rgba(255,255,255,0.08)",
+						}}
+					>
+						{statItems.map((stat, i) => (
+							<div key={stat.label} style={{ display: "flex", alignItems: "center" }}>
+								{i > 0 && (
+									<div
+										style={{
+											width: 1,
+											height: 40,
+											background: "rgba(255,255,255,0.10)",
+											margin: "0 40px",
+											display: "flex",
+										}}
+									/>
+								)}
+								<div
+									style={{
+										display: "flex",
+										flexDirection: "column",
+										alignItems: "center",
+										gap: 8,
+									}}
+								>
+									<span
+										style={{
+											fontSize: 40,
+											fontWeight: 800,
+											color: "#FFFFFF",
+											lineHeight: 1,
+										}}
+									>
+										{stat.value}
+									</span>
+									<span
+										style={{
+											fontSize: 14,
+											fontWeight: 500,
+											color: "rgba(255,255,255,0.35)",
+											letterSpacing: "0.12em",
+											textTransform: "uppercase",
+										}}
+									>
+										{stat.label}
+									</span>
+								</div>
+							</div>
+						))}
+					</div>
+				)}
+
+				{/* Tagline — non-user types, or user with no stats */}
+				{(!isUser || !hasStats) && (
+					<span
+						style={{
+							fontSize: 26,
+							fontWeight: 400,
+							color: "rgba(139,163,185,0.85)",
+							letterSpacing: "0.01em",
+							textAlign: "center",
+							maxWidth: 700,
+							marginTop: isUser ? 32 : 0,
+						}}
+					>
+						{tagline}
+					</span>
+				)}
 			</div>
 
 			{/* Bottom cyan/orange gradient line */}
@@ -230,6 +342,15 @@ export async function GET(_req: Request, { params }: { params: Promise<{ type: s
 				</span>
 			</div>
 		</div>,
-		{ width: W, height: H }
+		{
+			width: W,
+			height: H,
+			headers: {
+				"Cache-Control":
+					type === "user"
+						? "public, max-age=3600, stale-while-revalidate=86400"
+						: "public, max-age=86400, immutable",
+			},
+		}
 	);
 }

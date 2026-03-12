@@ -56,7 +56,7 @@ export const ResourceChip = memo(function ResourceChip({ resource }: ResourceChi
 	const isNegative = rate < -0.01;
 
 	return (
-		<div className="group relative flex min-w-37 shrink-0 flex-col gap-1.5 rounded-xl border border-white/7 bg-white/3 px-3 py-2 transition-colors duration-200 hover:border-white/12 hover:bg-white/5.5">
+		<div className="group relative flex min-w-28 shrink-0 flex-col gap-1.5 rounded-xl border border-white/7 bg-white/3 px-2 py-1.5 transition-colors duration-200 hover:border-white/12 hover:bg-white/5.5 sm:min-w-37 sm:px-3 sm:py-2">
 			{/* Top-edge accent on hover */}
 			<div
 				className="pointer-events-none absolute inset-x-0 top-0 h-px rounded-t-xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
